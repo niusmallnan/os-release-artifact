@@ -3,3 +3,6 @@ set -e
 
 source $(dirname $0)/version
 
+echo "upload to google storage using:"
+echo "  gsutil cp dist/artifact-${OS_VERSION}.json gs://releases.rancher.com/os/latest/artifact.json"
+echo "  gsutil cp dist/artifact-${OS_VERSION}.json gs://releases.rancher.com/os/${OS_VERSION}/artifact.json"

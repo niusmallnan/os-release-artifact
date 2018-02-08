@@ -1,3 +1,7 @@
 #!/bin/bash
 
 exec $(dirname $0)/ci
+
+echo "upload to google storage using:"
+echo "  gsutil cp dist/artifact-${OS_VERSION}.json gs://releases.rancher.com/os/latest/artifact.json"
+echo "  gsutil cp dist/artifact-${OS_VERSION}.json gs://releases.rancher.com/os/${OS_VERSION}/artifact.json"

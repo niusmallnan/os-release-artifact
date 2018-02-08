@@ -9,7 +9,9 @@ RUN apt-get update && \
     && pip install awscli && \
     rm -f /bin/sh && ln -s /bin/bash /bin/sh
 
-ENV DAPPER_ENV REPO TAG DRONE_TAG
+ENV DAPPER_ENV REPO TAG DRONE_TAG \
+    OS_VERSION DOCKER_VERSION KERNEL_VERSION \
+    AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
 ENV DAPPER_SOURCE /source
 ENV DAPPER_OUTPUT ./dist
 ENV HOME ${DAPPER_SOURCE}

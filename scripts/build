@@ -4,3 +4,32 @@ set -e
 source $(dirname $0)/version
 
 cd $(dirname $0)/..
+
+if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+    echo AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set
+fi
+
+if [ -z "$OS_VERSION" ] || [ -z "$DOCKER_VERSION" ] || [ -z "$KERNEL_VERSION" ]; then
+    echo OS_VERSION/KERNEL_VERSION/DOCKER_VERSION must be set
+fi
+
+for REGIONLINE in $(aws --output=text ec2 describe-regions --region us-west-2 | sed 's/\s/,/g'); do
+    REGION=$(echo $REGIONLINE | cut -f3 -d,)
+
+    # Get AMI name
+    for LINE in $(aws --output text ec2 describe-images --region $REGION --owner self --query 'Images[*].{ID:ImageId,Name:Name,SnapshotId:BlockDeviceMappings[0].Ebs.SnapshotId}'  | grep ${OS_VERSION} | sed 's/\s/,/g' ); do
+
+        AMI=$(echo "$LINE" | cut -f1 -d ',')
+        NAME=$(echo "$LINE" | cut -f2 -d ',')
+        SNAPSHOT=$(echo "$LINE" | cut -f3 -d ',')
+        if [[ "$NAME" == *test* ]]; then
+            echo "      Skipping test $NAME: $AMI with $SNAPSHOT in $REGION"
+        else
+            echo "Getting public $NAME: $AMI with $SNAPSHOT in $REGION"
+
+        fi
+    done
+done
+
+sed -f artifact.sed artifact.tpl > dist/artifact.json
+

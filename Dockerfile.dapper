@@ -5,8 +5,8 @@ ARG DAPPER_HOST_ARCH
 ENV HOST_ARCH=${DAPPER_HOST_ARCH} ARCH=${DAPPER_HOST_ARCH}
 
 RUN apt-get update && \
-    apt-get install -y python-pip jq && \
-    && pip install awscli && \
+    apt-get install -y python-pip jq git && \
+    pip install awscli && \
     rm -f /bin/sh && ln -s /bin/bash /bin/sh
 
 ENV DAPPER_ENV REPO TAG DRONE_TAG \

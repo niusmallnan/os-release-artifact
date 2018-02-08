@@ -13,6 +13,9 @@ if [ -z "$OS_VERSION" ] || [ -z "$DOCKER_VERSION" ] || [ -z "$KERNEL_VERSION" ];
     echo OS_VERSION/KERNEL_VERSION/DOCKER_VERSION must be set
 fi
 
+AMI_HVM_LIST="{}"
+AMI_HVM_ECS_LIST="{}"
+
 for REGIONLINE in $(aws --output=text ec2 describe-regions --region us-west-2 | sed 's/\s/,/g'); do
     REGION=$(echo $REGIONLINE | cut -f3 -d,)
 
@@ -24,12 +27,23 @@ for REGIONLINE in $(aws --output=text ec2 describe-regions --region us-west-2 | 
         SNAPSHOT=$(echo "$LINE" | cut -f3 -d ',')
         if [[ "$NAME" == *test* ]]; then
             echo "      Skipping test $NAME: $AMI with $SNAPSHOT in $REGION"
-        else
-            echo "Getting public $NAME: $AMI with $SNAPSHOT in $REGION"
-
+            continue
         fi
+        if [[ "$NAME" == *ecs* ]]; then
+            echo "Getting the ECS image $NAME: $AMI with $SNAPSHOT in $REGION"
+            AMI_HVM_ECS_LIST=`echo '${AMI_HVM_ECS_LIST}' | jq --arg __region__ ${REGION} --arg __ami__ ${AMI}'. + {$__region__: $__ami__}'`
+            continue
+        fi
+        echo "Getting the HVM image $NAME: $AMI with $SNAPSHOT in $REGION"
+        AMI_HVM_LIST=`echo '${AMI_HVM_LIST}' | jq --arg __region__ ${REGION} --arg __ami__ ${AMI}'. + {$__region__: $__ami__}'`
     done
 done
 
-sed -f artifact.sed artifact.tpl > dist/artifact.json
+echo "s/\${OS_VERSION}/${OS_VERSION}/g" > artifact.sed
+echo "s/\${DOCKER_VERSION}/${DOCKER_VERSION}/g" >> artifact.sed
+echo "s/\${KERNEL_VERSION}/${KERNEL_VERSION}/g" >> artifact.sed
+echo "s/\${AMI_HVM_LIST}/${AMI_HVM_LIST}/g" >> artifact.sed
+echo "s/\${AMI_HVM_ECS_LIST}/${AMI_HVM_ECS_LIST}/g" >> artifact.sed
+
+sed -f artifact.sed artifact.tpl | jq . > dist/artifact-${OS_VERSION}.json
 
